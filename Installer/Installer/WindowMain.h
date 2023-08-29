@@ -8,12 +8,22 @@ public:
 	WindowMain();
 	~WindowMain();
 private:
-	int OnHitTest(const int& x, const int& y) { return HTCLIENT; };
-	void BeforePaint() {};
+	void InitCanvas();
+	void InitWindow();
+	static LRESULT CALLBACK RouteWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+	int OnHitTest(const int& x, const int& y) { return HTCAPTION; };  //HTCLIENT
+	void Repaint();
+	void DrawShadow();
 
 	BLContext* PaintCtx;
 	void* pixelData;
-	HBITMAP bottomHbitmap;
-	HDC hCompatibleDC = NULL;
+	unsigned long pixelDataSize;
+	HBITMAP bitmap;
+	BLImage* CanvasImage;
+	HDC compatibleDC = NULL;
+	HWND hwnd;
+	unsigned w{ 1000 }, h{700};
+	int x, y;
 };
 
