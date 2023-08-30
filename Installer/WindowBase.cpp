@@ -2,6 +2,7 @@
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <format>
+#include "Util.h"
 
 WindowBase::WindowBase() {
 }
@@ -12,7 +13,7 @@ WindowBase::~WindowBase() {
     DeleteObject(bitmap);
 }
 
-void WindowBase::InitWindow(const int& x, const int& y, const long& w, const long& h)
+void WindowBase::InitWindow(const int& x, const int& y, const long& w, const long& h,const std::wstring& title)
 {
     this->x = x;
     this->y = y;
@@ -36,15 +37,14 @@ void WindowBase::InitWindow(const int& x, const int& y, const long& w, const lon
         MessageBox(NULL, L"注册窗口类失败", L"系统提示", NULL);
         return;
     }    
-    hwnd = CreateWindowEx(WS_EX_LAYERED, wcx.lpszClassName, wcx.lpszClassName,
+    hwnd = CreateWindowEx(WS_EX_LAYERED, wcx.lpszClassName, title.c_str(),
         WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP, x, y, w, h, NULL, NULL, hinstance, static_cast<LPVOID>(this));
     SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
     InitCanvas();
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
     Repaint();
-    auto hCursor = LoadCursor(NULL, IDC_ARROW);
-    SetCursor(hCursor);
+    ChangeCursor(IDC_ARROW);
 }
 void WindowBase::InitCanvas() {
     auto stride = w * 4;
@@ -80,21 +80,55 @@ LRESULT CALLBACK WindowBase::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 {
     switch (msg)
     {
-    case WM_NCCALCSIZE:
-    {
-        if (wParam == TRUE)
+        case WM_NCCALCSIZE:
         {
-            return false;
+            if (wParam == TRUE)
+            {
+                return false;
+            }
+            break;
         }
-        break;
-    }
-    case WM_NCHITTEST:
-    {
-        return OnHitTest(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-    }
-    case WM_SETCURSOR: {
-        return true;
-    }
+        case WM_NCHITTEST:
+        {
+            auto x = GET_X_LPARAM(lParam)-this->x;
+            auto y = GET_Y_LPARAM(lParam)-this->y;
+            if (x < 16 || y < 16 || x>w - 16 || y>h - 16) {
+                return HTNOWHERE;
+            }
+            return OnHitTest(x,y);
+        }
+        case WM_SETCURSOR: {
+            return true;
+        }
+        case WM_RBUTTONDOWN: {
+            auto x = GET_X_LPARAM(lParam);
+            auto y = GET_Y_LPARAM(lParam);
+            return OnRightButtonDown(x, y);
+        }
+        case WM_LBUTTONDOWN: {
+            IsLeftBtnDown = true;
+            auto x = GET_X_LPARAM(lParam);
+            auto y = GET_Y_LPARAM(lParam);
+            return OnLeftButtonDown(x, y);
+        }
+        case WM_LBUTTONUP: {
+            IsLeftBtnDown = false;
+            auto x = GET_X_LPARAM(lParam);
+            auto y = GET_Y_LPARAM(lParam);
+            return OnLeftButtonUp(x, y);
+        }
+        case WM_MOUSEMOVE: {
+            auto x = GET_X_LPARAM(lParam);
+            auto y = GET_Y_LPARAM(lParam);
+            return OnMouseMove(x, y);
+        }
+        case WM_EXITSIZEMOVE: {
+            RECT rect;
+            GetWindowRect(hWnd, &rect);
+            this->x = rect.left;
+            this->y = rect.top;
+            return true;
+        }
     }
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
