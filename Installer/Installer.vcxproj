@@ -141,11 +141,22 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="WindowBase.cpp" />
     <ClCompile Include="WindowMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Font.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="WindowBase.h" />
     <ClInclude Include="WindowMain.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ToDo.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Installer.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

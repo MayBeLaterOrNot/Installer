@@ -1,28 +1,31 @@
-Ôªø#include "WindowMain.h"
+#include "WindowBase.h"
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <format>
 
-WindowMain::WindowMain() {
-    InitWindow();
+WindowBase::WindowBase() {
 }
-WindowMain::~WindowMain() {
+WindowBase::~WindowBase() {
     delete PaintCtx;
     delete CanvasImage;
     DeleteObject(compatibleDC);
     DeleteObject(bitmap);
 }
 
-void WindowMain::InitWindow()
+void WindowBase::InitWindow(const int& x, const int& y, const long& w, const long& h)
 {
+    this->x = x;
+    this->y = y;
+    this->w = w;
+    this->h = h;
     static int num = 0;
     std::wstring className = std::format(L"Install_{}", num++);
     auto hinstance = GetModuleHandle(NULL);
     WNDCLASSEX wcx{};
     wcx.cbSize = sizeof(wcx);
     wcx.style = CS_HREDRAW | CS_VREDRAW;
-    wcx.lpfnWndProc = &WindowMain::RouteWindowMessage;
-    wcx.cbWndExtra = sizeof(WindowMain*);
+    wcx.lpfnWndProc = &WindowBase::RouteWindowMessage;
+    wcx.cbWndExtra = sizeof(WindowBase*);
     wcx.hInstance = hinstance;
     wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -30,14 +33,10 @@ void WindowMain::InitWindow()
     wcx.lpszClassName = className.c_str();
     if (!RegisterClassEx(&wcx))
     {
-        MessageBox(NULL, L"Ê≥®ÂÜåÁ™óÂè£Á±ªÂ§±Ë¥•", L"Á≥ªÁªüÊèêÁ§∫", NULL);
+        MessageBox(NULL, L"◊¢≤·¥∞ø⁄¿‡ ß∞‹", L"œµÕ≥Ã· æ", NULL);
         return;
-    }
-    RECT rect;
-    SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
-    x = (rect.right - w) / 2;
-    y = (rect.bottom - h) / 2;
-    hwnd = CreateWindowEx(WS_EX_LAYERED, wcx.lpszClassName, wcx.lpszClassName, 
+    }    
+    hwnd = CreateWindowEx(WS_EX_LAYERED, wcx.lpszClassName, wcx.lpszClassName,
         WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP, x, y, w, h, NULL, NULL, hinstance, static_cast<LPVOID>(this));
     SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
     InitCanvas();
@@ -47,7 +46,7 @@ void WindowMain::InitWindow()
     auto hCursor = LoadCursor(NULL, IDC_ARROW);
     SetCursor(hCursor);
 }
-void WindowMain::InitCanvas() {
+void WindowBase::InitCanvas() {
     auto stride = w * 4;
     pixelDataSize = stride * h;
     pixelData = new unsigned char[pixelDataSize];
@@ -56,69 +55,71 @@ void WindowMain::InitCanvas() {
     CanvasImage->createFromData(w, h, BL_FORMAT_PRGB32, pixelData, stride, BL_DATA_ACCESS_RW, [](void* impl, void* externalData, void* userData) {
         delete[] externalData;
         });
-    PaintCtx->begin(*CanvasImage);
-    PaintCtx->clearAll();
-    DrawShadow();
-    PaintCtx->fillBox(16, 16, w - 16, h - 16,BLRgba32(255,255,255));
-    PaintCtx->end();
     HDC hdc = GetDC(hwnd);
     compatibleDC = CreateCompatibleDC(NULL);
-    bitmap = CreateCompatibleBitmap(hdc, w, h); //ÂàõÂª∫‰∏ÄÂâØ‰∏éÂΩìÂâçDCÂÖºÂÆπÁöÑ‰ΩçÂõæ
+    bitmap = CreateCompatibleBitmap(hdc, w, h); //¥¥Ω®“ª∏±”Îµ±«∞DCºÊ»›µƒŒªÕº
     DeleteObject(SelectObject(compatibleDC, bitmap));
     ReleaseDC(hwnd, hdc);
+
 }
-LRESULT CALLBACK WindowMain::RouteWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK WindowBase::RouteWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_NCCREATE)
     {
         CREATESTRUCT* pCS = reinterpret_cast<CREATESTRUCT*>(lParam);
         LPVOID pThis = pCS->lpCreateParams;
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
     }
-    auto obj = reinterpret_cast<WindowMain*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    auto obj = reinterpret_cast<WindowBase*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     if (obj) {
         return obj->WindowProc(hWnd, msg, wParam, lParam);
     }
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK WindowMain::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WindowBase::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
-        case WM_NCCALCSIZE:
+    case WM_NCCALCSIZE:
+    {
+        if (wParam == TRUE)
         {
-            if (wParam == TRUE)
-            {
-                return false;
-            }
-            break;
+            return false;
         }
-        case WM_NCHITTEST:
-        {
-            return OnHitTest(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-        }
-        case WM_SETCURSOR: {
-            return true;
-        }
+        break;
+    }
+    case WM_NCHITTEST:
+    {
+        return OnHitTest(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+    }
+    case WM_SETCURSOR: {
+        return true;
+    }
     }
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-void WindowMain::Repaint()
+void WindowBase::Repaint()
 {
+    PaintCtx->begin(*CanvasImage);
+    PaintCtx->clearAll();
+    DrawShadow();
+    PaintCtx->fillBox(16, 16, w - 16, h - 16, BLRgba32(255, 255, 255));
+    OnPaint();
+    PaintCtx->end();
     HDC hdc = GetDC(hwnd);
     BITMAPINFO info = { sizeof(BITMAPINFOHEADER), w, 0 - h, 1, 32, BI_RGB, pixelDataSize, 0, 0, 0, 0 };
-    SetDIBits(hdc, bitmap, 0, h, pixelData, &info, DIB_RGB_COLORS); //‰ΩøÁî®ÊåáÂÆöÁöÑDIBÈ¢úËâ≤Êï∞ÊçÆÊù•ËÆæÁΩÆ‰ΩçÂõæ‰∏≠ÁöÑÂÉèÁ¥†
-    BLENDFUNCTION blend = { .BlendOp{AC_SRC_OVER},.SourceConstantAlpha{255},.AlphaFormat{AC_SRC_ALPHA} };//ÊåâÈÄöÈÅìÊ∑∑Âêà
+    SetDIBits(hdc, bitmap, 0, h, pixelData, &info, DIB_RGB_COLORS); // π”√÷∏∂®µƒDIB—’…´ ˝æ›¿¥…Ë÷√ŒªÕº÷–µƒœÒÀÿ
+    BLENDFUNCTION blend = { .BlendOp{AC_SRC_OVER},.SourceConstantAlpha{255},.AlphaFormat{AC_SRC_ALPHA} };//∞¥Õ®µ¿ªÏ∫œ
     POINT pSrc = { 0, 0 };
     SIZE sizeWnd = { w, h };
-    UpdateLayeredWindow(hwnd, hdc, NULL, &sizeWnd, compatibleDC, &pSrc, NULL, &blend, ULW_ALPHA);//Êõ¥Êñ∞ÂàÜÂ±ÇÁ™óÂè£
+    UpdateLayeredWindow(hwnd, hdc, NULL, &sizeWnd, compatibleDC, &pSrc, NULL, &blend, ULW_ALPHA);//∏¸–¬∑÷≤„¥∞ø⁄
     ReleaseDC(hwnd, hdc);
 }
 
-void WindowMain::DrawShadow()
+void WindowBase::DrawShadow()
 {
-    {//Â∑¶‰∏ä
+    {//◊Û…œ
         BLGradient radial(BLRadialGradientValues(16, 16, 16, 16, 16));
         radial.addStop(0.0, BLRgba32(0x22000000));
         radial.addStop(1.0, BLRgba32(0x00000000));
@@ -130,7 +131,7 @@ void WindowMain::DrawShadow()
         PaintCtx->fillBox(0, 16, 16, 32);
         PaintCtx->setCompOp(BL_COMP_OP_SRC_OVER);
     }
-    {//Âè≥‰∏ä
+    {//”“…œ
         BLGradient radial(BLRadialGradientValues(w - 16, 16, w - 16, 16, 16));
         radial.addStop(0.0, BLRgba32(0x22000000));
         radial.addStop(1.0, BLRgba32(0x00000000));
@@ -142,18 +143,18 @@ void WindowMain::DrawShadow()
         PaintCtx->fillBox(w - 16, 16, w, 32);
         PaintCtx->setCompOp(BL_COMP_OP_SRC_OVER);
     }
-    { //Âè≥‰∏ã
+    { //”“œ¬
         BLGradient radial(BLRadialGradientValues(w - 16, h - 16, w - 16, h - 16, 16));
         radial.addStop(0.0, BLRgba32(0x22000000));
         radial.addStop(1.0, BLRgba32(0x00000000));
-        PaintCtx->fillCircle(w-16, h-16, 16, radial);
+        PaintCtx->fillCircle(w - 16, h - 16, 16, radial);
         PaintCtx->setCompOp(BL_COMP_OP_CLEAR);
         PaintCtx->setFillStyle(BLRgba32(0xFF000000));
-        PaintCtx->fillBox(w - 16, h-32, w, h-16);
-        PaintCtx->fillBox(w-32, h-16, w - 16, h);
+        PaintCtx->fillBox(w - 16, h - 32, w, h - 16);
+        PaintCtx->fillBox(w - 32, h - 16, w - 16, h);
         PaintCtx->setCompOp(BL_COMP_OP_SRC_OVER);
     }
-    { //Â∑¶‰∏ã
+    { //◊Ûœ¬
         BLGradient radial(BLRadialGradientValues(16, h - 16, 16, h - 16, 16));
         radial.addStop(0.0, BLRgba32(0x22000000));
         radial.addStop(1.0, BLRgba32(0x00000000));
@@ -164,29 +165,29 @@ void WindowMain::DrawShadow()
         PaintCtx->fillBox(0, h - 32, 16, h - 16);
         PaintCtx->setCompOp(BL_COMP_OP_SRC_OVER);
     }
-    { //‰∏ä
+    { //…œ
         BLGradient linear(BLLinearGradientValues(0, 0, 0, 16));
         linear.addStop(0.0, BLRgba32(0x00000000));
         linear.addStop(1.0, BLRgba32(0x22000000));
-        PaintCtx->fillBox(16, 0, w-16, 16, linear);
+        PaintCtx->fillBox(16, 0, w - 16, 16, linear);
     }
-    { //Âè≥
+    { //”“
         BLGradient linear(BLLinearGradientValues(w - 16, 16, w, 16));
         linear.addStop(0.0, BLRgba32(0x22000000));
         linear.addStop(1.0, BLRgba32(0x00000000));
         PaintCtx->fillBox(w - 16, 16, w, h - 16, linear);
     }
-    { //‰∏ã
+    { //œ¬
         BLGradient linear(BLLinearGradientValues(0, h - 16, 0, h));
         linear.addStop(0.0, BLRgba32(0x22000000));
         linear.addStop(1.0, BLRgba32(0x00000000));
         PaintCtx->fillBox(16, h - 16, w - 16, h, linear);
     }
-    { //Â∑¶
+    { //◊Û
         BLGradient linear(BLLinearGradientValues(0, 0, 16, 0));
         linear.addStop(0.0, BLRgba32(0x00000000));
         linear.addStop(1.0, BLRgba32(0x22000000));
-        PaintCtx->fillBox(0, 16, 16, h-16, linear);
+        PaintCtx->fillBox(0, 16, 16, h - 16, linear);
     }
     PaintCtx->setStrokeWidth(0.8);
     PaintCtx->strokeBox(16, 16, w - 16, h - 16, BLRgba32(0, 128, 0));
