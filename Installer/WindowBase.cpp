@@ -80,6 +80,7 @@ LRESULT CALLBACK WindowBase::RouteWindowMessage(HWND hWnd, UINT msg, WPARAM wPar
 
 LRESULT CALLBACK WindowBase::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    static bool mouseTracing = false;
     switch (msg)
     {
         case WM_NCCALCSIZE:
@@ -128,7 +129,29 @@ LRESULT CALLBACK WindowBase::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             }
             return OnLeftButtonUp(x, y);
         }
+        case WM_MOUSELEAVE:
+        {
+            mouseTracing = false;
+            int index = Buttons.size() - 1;
+            while (index >= 0)
+            {
+                auto flag = Buttons[index]->MouseMove(INT_MIN, INT_MIN);
+                if (flag) {
+                    break;
+                }
+                index -= 1;
+            }
+            return OnMouseMove(INT_MIN, INT_MIN);
+        }
         case WM_MOUSEMOVE: {
+            if (!mouseTracing)
+            {
+                TRACKMOUSEEVENT tme = {};
+                tme.cbSize = sizeof(TRACKMOUSEEVENT);
+                tme.dwFlags = TME_LEAVE;
+                tme.hwndTrack = hWnd;
+                mouseTracing = TrackMouseEvent(&tme);
+            }
             auto x = GET_X_LPARAM(lParam);
             auto y = GET_Y_LPARAM(lParam);
             int index = Buttons.size() - 1;
