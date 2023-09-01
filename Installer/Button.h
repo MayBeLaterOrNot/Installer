@@ -1,22 +1,27 @@
 #pragma once
 #include <string>
 #include <blend2d.h>
-#include "WindowBase.h"
+#include <functional>
+#include "Align.h"
 class Button
 {
 public:
-	Button(WindowBase* parent, 
-		const int& x, const int& y, const int& w, const int& h, 
-		const bool& isIcon,const double& fontSize,
-		const std::string& text);
+	Button();
 	~Button();
 	void Paint(BLContext* PaintCtx);
-	void MouseMove(const int& x, const int& y);
-	BLRectI rect;
-	std::string text;
-	bool IsMouseEnter = false;
-	bool isIcon;
-	double fontSize;
-	WindowBase* parent;
+	bool MouseMove(const int& x, const int& y);
+	bool MouseUp(const int& x, const int& y);
+	std::function<void(Button* sender)> OnMouseEnter;
+	std::function<void(Button* sender)> OnMouseOut;
+	std::function<void(Button* sender)> OnMouseUp;
+	BLRgba32 BackgroundColor;
+	BLRgba32 ForegroundColor;
+	BLBoxI Box;
+	std::string Text;
+	Align Align{ Align::Center };
+	bool IsMouseEnter{ false };
+	bool IsIcon{false};
+	double FontSize{20};
+	double Radius{0};
 };
 

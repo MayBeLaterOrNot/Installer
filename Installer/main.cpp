@@ -6,6 +6,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 {
     Font::Init();
     WindowMain win;
+    win.Show();
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0))
     {

@@ -2,6 +2,9 @@
 #include <Windows.h>
 #include <blend2d.h>
 #include <string>
+#include <vector>
+#include <memory>
+#include "Button.h"
 
 class WindowBase
 {
@@ -9,6 +12,7 @@ public:
 	WindowBase();
 	~WindowBase();
 	void Repaint();
+	void Show();
 protected:
 	void InitWindow(const int& x, const int& y,const long& w,const long& h,const std::wstring& title);
 	virtual void OnPaint() {};
@@ -22,6 +26,8 @@ protected:
 	long w, h;
 	int x, y;
 	bool IsLeftBtnDown;
+	std::vector<std::shared_ptr<Button>> Buttons;
+	HWND hwnd;
 private:
 	void InitCanvas();
 	static LRESULT CALLBACK RouteWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -31,6 +37,5 @@ private:
 	unsigned long pixelDataSize;
 	HBITMAP bitmap;	
 	HDC compatibleDC = NULL;
-	HWND hwnd;
 };
 

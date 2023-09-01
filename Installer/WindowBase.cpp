@@ -41,10 +41,12 @@ void WindowBase::InitWindow(const int& x, const int& y, const long& w, const lon
         WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP, x, y, w, h, NULL, NULL, hinstance, static_cast<LPVOID>(this));
     SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
     InitCanvas();
+    ChangeCursor(IDC_ARROW);
+}
+void WindowBase::Show() {
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
     Repaint();
-    ChangeCursor(IDC_ARROW);
 }
 void WindowBase::InitCanvas() {
     auto stride = w * 4;
@@ -115,11 +117,29 @@ LRESULT CALLBACK WindowBase::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             IsLeftBtnDown = false;
             auto x = GET_X_LPARAM(lParam);
             auto y = GET_Y_LPARAM(lParam);
+            int index = Buttons.size() - 1;
+            while (index >= 0)
+            {
+                auto flag = Buttons[index]->MouseUp(x, y);
+                if (flag) {
+                    break;
+                }
+                index -= 1;
+            }
             return OnLeftButtonUp(x, y);
         }
         case WM_MOUSEMOVE: {
             auto x = GET_X_LPARAM(lParam);
             auto y = GET_Y_LPARAM(lParam);
+            int index = Buttons.size() - 1;
+            while (index>=0)
+            {
+                auto flag = Buttons[index]->MouseMove(x, y);
+                if (flag) {
+                    break;
+                }
+                index -= 1;
+            }
             return OnMouseMove(x, y);
         }
         case WM_EXITSIZEMOVE: {
@@ -139,6 +159,10 @@ void WindowBase::Repaint()
     PaintCtx->clearAll();
     DrawShadow();
     PaintCtx->fillBox(16, 16, w - 16, h - 16, BLRgba32(255, 255, 255));
+    for (const auto& btn : Buttons)
+    {
+        btn->Paint(PaintCtx);
+    }
     OnPaint();
     PaintCtx->end();
     HDC hdc = GetDC(hwnd);

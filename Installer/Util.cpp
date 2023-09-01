@@ -22,20 +22,6 @@ void ChangeCursor(LPCTSTR cursor)
     SetCursor(hCursor);
 }
 
-BLPoint GetCenterTextPoint(const std::string& str, const double& x, const double& y, const double& w, const double& h) {
-    auto font = Font::Get()->fontText;
-    BLFontMetrics fm = font->metrics();
-    BLTextMetrics tm;
-    BLGlyphBuffer gb;
-    gb.setUtf8Text(str.c_str());
-    font->shape(gb);
-    font->getTextMetrics(gb, tm);
-    BLPoint point;
-    point.x = x + (w - (tm.boundingBox.x1 - tm.boundingBox.x0)) / 2;
-    point.y = y + fm.ascent + (h - font->size()) / 2;
-    return point;
-}
-
 void Debug(const std::string& info)
 {
     OutputDebugStringA("\r\n");

@@ -1,16 +1,9 @@
 #include "Button.h"
 #include "Font.h"
 #include "Util.h"
-#include "WindowBase.h"
 
 
-Button::Button(WindowBase* parent, 
-    const int& x, const int& y, const int& w, const int& h, 
-    const bool& isIcon, const double& fontSize,
-    const std::string& text) :
-    parent{parent}, rect(x, y, w, h), 
-    isIcon{isIcon},fontSize{fontSize},
-    text{ text }
+Button::Button()
 {
 
 }
@@ -19,36 +12,110 @@ Button::~Button() {
 }
 
 void Button::Paint(BLContext* PaintCtx) {
-    BLRoundRect rect(this->rect, 8);
-    PaintCtx->fillRoundRect(rect, IsMouseEnter? BLRgba32(0xff5b8c00) :BLRgba32(0xffd3f261));
-    BLFont* font;
-    if (isIcon) {
-        font = Font::Get()->fontIcon;
+    if (Radius != 0) {
+        BLRoundRect rect(Box.x0, Box.y0, Box.x1-Box.x0, Box.y1-Box.y0, Radius);
+        PaintCtx->fillRoundRect(rect,BackgroundColor);
     }
     else
     {
-       font = Font::Get()->fontText;
+        PaintCtx->fillBox(Box, BackgroundColor);
     }
-    font->setSize(fontSize);
-    BLPoint point = GetCenterTextPoint(text, rect.x, rect.y, rect.w, rect.h);
-    PaintCtx->setFillStyle(IsMouseEnter ? BLRgba32(255, 255, 255):BLRgba32(60, 60, 60));
-    PaintCtx->fillUtf8Text(point, *font, text.c_str());
+    if (!Text.empty()) {
+        BLFont* font;
+        if (IsIcon) {
+            font = Font::Get()->fontIcon;
+        }
+        else
+        {
+            font = Font::Get()->fontText;
+        }
+        font->setSize(FontSize);
+        BLFontMetrics fm = font->metrics();
+        BLTextMetrics tm;
+        BLGlyphBuffer gb;
+        gb.setUtf8Text(Text.c_str());
+        font->shape(gb);
+        font->getTextMetrics(gb, tm);
+        BLPoint point;
+        switch (Align)
+        {
+            case Align::Unset: {
+
+                break;
+            }
+            case Align::TopLeft: {
+
+                break;
+            }            
+            case Align::TopRight: {
+
+                break;
+            }
+            case Align::BottomLeft: {
+
+                break;
+            }
+            case Align::BottomRight: {
+
+                break;
+            }
+            case Align::TopCenter: {
+
+                break;
+            }
+            case Align::BottomCenter: {
+
+                break;
+            }
+            case Align::LeftCenter: {
+                point.x = Box.x0;
+                point.y = Box.y0 + fm.ascent + ((Box.y1 - Box.y0) - font->size()) / 2;
+                break;
+            }
+            case Align::RightCenter: {
+
+                break;
+            }
+            case Align::Center: {
+                point.x = Box.x0 + ((Box.x1 - Box.x0) - (tm.boundingBox.x1 - tm.boundingBox.x0)) / 2;
+                point.y = Box.y0 + fm.ascent + ((Box.y1 - Box.y0) - font->size()) / 2;
+                break;
+            }
+        }
+        PaintCtx->setFillStyle(ForegroundColor);
+        PaintCtx->fillUtf8Text(point, *font, Text.c_str());
+    }
+    
 }
 
-void Button::MouseMove(const int& x, const int& y) {
-    if (IsMouseEnter) {
-        if (x < rect.x || y < rect.y || x>rect.x + rect.w || y > rect.y + rect.h) {
-            IsMouseEnter = false;
-            ChangeCursor(IDC_ARROW);
-            parent->Repaint();
+bool Button::MouseMove(const int& x, const int& y) {
+    if (Box.contains(x, y)) {
+        if (!IsMouseEnter) {
+            IsMouseEnter = true;
+            if (OnMouseEnter) {
+                OnMouseEnter(this);
+            }
+            return true;
         }
     }
     else
     {
-        if (x > rect.x && x < rect.x + rect.w && y>rect.y && y < rect.y + rect.h) {
-            IsMouseEnter = true;
-            ChangeCursor(IDC_HAND);
-            parent->Repaint();
+        if (IsMouseEnter) {
+            IsMouseEnter = false;
+            if (OnMouseOut) {
+                OnMouseOut(this);
+            }
+            return true;
         }
-    }    
+    }
+    return false;
+}
+bool Button::MouseUp(const int& x, const int& y) {
+    if (IsMouseEnter) {
+        if (OnMouseUp) {
+            OnMouseUp(this);
+        }        
+        return true;
+    }
+    return false;
 }
