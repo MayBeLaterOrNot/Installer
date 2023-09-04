@@ -9,7 +9,7 @@ WindowBase::WindowBase() {
 WindowBase::~WindowBase() {
     delete PaintCtx;
     delete CanvasImage;
-    DeleteObject(compatibleDC);
+    DeleteDC(compatibleDC);
     DeleteObject(bitmap);
 }
 
