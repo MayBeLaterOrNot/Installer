@@ -1,4 +1,4 @@
-#include "WindowBase.h"
+ï»¿#include "WindowBase.h"
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <format>
@@ -34,7 +34,7 @@ void WindowBase::InitWindow(const int& x, const int& y, const long& w, const lon
     wcx.lpszClassName = className.c_str();
     if (!RegisterClassEx(&wcx))
     {
-        MessageBox(NULL, L"×¢²á´°¿ÚÀàÊ§°Ü", L"ÏµÍ³ÌáÊ¾", NULL);
+        MessageBox(NULL, L"æ³¨å†Œçª—å£ç±»å¤±è´¥", L"ç³»ç»Ÿæç¤º", NULL);
         return;
     }    
     hwnd = CreateWindowEx(WS_EX_LAYERED, wcx.lpszClassName, title.c_str(),
@@ -59,11 +59,11 @@ void WindowBase::InitCanvas() {
         });
     HDC hdc = GetDC(hwnd);
     compatibleDC = CreateCompatibleDC(NULL);
-    bitmap = CreateCompatibleBitmap(hdc, w, h); //´´½¨Ò»¸±Óëµ±Ç°DC¼æÈÝµÄÎ»Í¼
+    bitmap = CreateCompatibleBitmap(hdc, w, h); //åˆ›å»ºä¸€å‰¯ä¸Žå½“å‰DCå…¼å®¹çš„ä½å›¾
     DeleteObject(SelectObject(compatibleDC, bitmap));
     ReleaseDC(hwnd, hdc);
-
 }
+
 LRESULT CALLBACK WindowBase::RouteWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_NCCREATE)
     {
@@ -190,17 +190,17 @@ void WindowBase::Repaint()
     PaintCtx->end();
     HDC hdc = GetDC(hwnd);
     BITMAPINFO info = { sizeof(BITMAPINFOHEADER), w, 0 - h, 1, 32, BI_RGB, pixelDataSize, 0, 0, 0, 0 };
-    SetDIBits(hdc, bitmap, 0, h, pixelData, &info, DIB_RGB_COLORS); //Ê¹ÓÃÖ¸¶¨µÄDIBÑÕÉ«Êý¾ÝÀ´ÉèÖÃÎ»Í¼ÖÐµÄÏñËØ
-    BLENDFUNCTION blend = { .BlendOp{AC_SRC_OVER},.SourceConstantAlpha{255},.AlphaFormat{AC_SRC_ALPHA} };//°´Í¨µÀ»ìºÏ
+    SetDIBits(hdc, bitmap, 0, h, pixelData, &info, DIB_RGB_COLORS); //ä½¿ç”¨æŒ‡å®šçš„DIBé¢œè‰²æ•°æ®æ¥è®¾ç½®ä½å›¾ä¸­çš„åƒç´ 
+    BLENDFUNCTION blend = { .BlendOp{AC_SRC_OVER},.SourceConstantAlpha{255},.AlphaFormat{AC_SRC_ALPHA} };//æŒ‰é€šé“æ··åˆ
     POINT pSrc = { 0, 0 };
     SIZE sizeWnd = { w, h };
-    UpdateLayeredWindow(hwnd, hdc, NULL, &sizeWnd, compatibleDC, &pSrc, NULL, &blend, ULW_ALPHA);//¸üÐÂ·Ö²ã´°¿Ú
+    UpdateLayeredWindow(hwnd, hdc, NULL, &sizeWnd, compatibleDC, &pSrc, NULL, &blend, ULW_ALPHA);//æ›´æ–°åˆ†å±‚çª—å£
     ReleaseDC(hwnd, hdc);
 }
 
 void WindowBase::DrawShadow()
 {
-    {//×óÉÏ
+    {//å·¦ä¸Š
         BLGradient radial(BLRadialGradientValues(16, 16, 16, 16, 16));
         radial.addStop(0.0, BLRgba32(0x22000000));
         radial.addStop(1.0, BLRgba32(0x00000000));
@@ -212,7 +212,7 @@ void WindowBase::DrawShadow()
         PaintCtx->fillBox(0, 16, 16, 32);
         PaintCtx->setCompOp(BL_COMP_OP_SRC_OVER);
     }
-    {//ÓÒÉÏ
+    {//å³ä¸Š
         BLGradient radial(BLRadialGradientValues(w - 16, 16, w - 16, 16, 16));
         radial.addStop(0.0, BLRgba32(0x22000000));
         radial.addStop(1.0, BLRgba32(0x00000000));
@@ -224,7 +224,7 @@ void WindowBase::DrawShadow()
         PaintCtx->fillBox(w - 16, 16, w, 32);
         PaintCtx->setCompOp(BL_COMP_OP_SRC_OVER);
     }
-    { //ÓÒÏÂ
+    { //å³ä¸‹
         BLGradient radial(BLRadialGradientValues(w - 16, h - 16, w - 16, h - 16, 16));
         radial.addStop(0.0, BLRgba32(0x22000000));
         radial.addStop(1.0, BLRgba32(0x00000000));
@@ -235,7 +235,7 @@ void WindowBase::DrawShadow()
         PaintCtx->fillBox(w - 32, h - 16, w - 16, h);
         PaintCtx->setCompOp(BL_COMP_OP_SRC_OVER);
     }
-    { //×óÏÂ
+    { //å·¦ä¸‹
         BLGradient radial(BLRadialGradientValues(16, h - 16, 16, h - 16, 16));
         radial.addStop(0.0, BLRgba32(0x22000000));
         radial.addStop(1.0, BLRgba32(0x00000000));
@@ -246,25 +246,25 @@ void WindowBase::DrawShadow()
         PaintCtx->fillBox(0, h - 32, 16, h - 16);
         PaintCtx->setCompOp(BL_COMP_OP_SRC_OVER);
     }
-    { //ÉÏ
+    { //ä¸Š
         BLGradient linear(BLLinearGradientValues(0, 0, 0, 16));
         linear.addStop(0.0, BLRgba32(0x00000000));
         linear.addStop(1.0, BLRgba32(0x22000000));
         PaintCtx->fillBox(16, 0, w - 16, 16, linear);
     }
-    { //ÓÒ
+    { //å³
         BLGradient linear(BLLinearGradientValues(w - 16, 16, w, 16));
         linear.addStop(0.0, BLRgba32(0x22000000));
         linear.addStop(1.0, BLRgba32(0x00000000));
         PaintCtx->fillBox(w - 16, 16, w, h - 16, linear);
     }
-    { //ÏÂ
+    { //ä¸‹
         BLGradient linear(BLLinearGradientValues(0, h - 16, 0, h));
         linear.addStop(0.0, BLRgba32(0x22000000));
         linear.addStop(1.0, BLRgba32(0x00000000));
         PaintCtx->fillBox(16, h - 16, w - 16, h, linear);
     }
-    { //×ó
+    { //å·¦
         BLGradient linear(BLLinearGradientValues(0, 0, 16, 0));
         linear.addStop(0.0, BLRgba32(0x00000000));
         linear.addStop(1.0, BLRgba32(0x22000000));
